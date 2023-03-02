@@ -1,12 +1,11 @@
 package acetoys;
 
-import io.gatling.javaapi.core.ScenarioBuilder;
-import io.gatling.javaapi.core.Simulation;
-import io.gatling.javaapi.http.HttpProtocolBuilder;
+import acetoys.pageObjects.*;
+import io.gatling.javaapi.core.*;
+import io.gatling.javaapi.http.*;
 
 import static io.gatling.javaapi.core.CoreDsl.*;
-import static io.gatling.javaapi.http.HttpDsl.http;
-import static io.gatling.javaapi.http.HttpDsl.status;
+import static io.gatling.javaapi.http.HttpDsl.*;
 
 public class AceToysSimulation extends Simulation {
 
@@ -18,114 +17,39 @@ public class AceToysSimulation extends Simulation {
     .acceptLanguageHeader("pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7");
 
   private ScenarioBuilder scn = scenario("AceToysSimulation")
-    .exec(
-      http("Load Home Page")
-        .get("/")
-              .check(status().is(200))  // Automatically Check
-              .check(status().not(404), status().not(405))
-              .check(substring("<title>Ace Toys Online Shop</title>"))
-              .check(css("#_csrf", "content").saveAs("csrfToken"))
-    )
+    .exec(StaticPages.homepage)
     .pause(2)
-    .exec(
-      http("Load Our Story Page")
-        .get("/our-story")
-              .check(regex("was founded online in \\d{4}"))
-    )
+    .exec(StaticPages.ourStory)
     .pause(2)
-    .exec(
-      http("Load Get in Touch Page")
-        .get("/get-in-touch")
-    )
+    .exec(StaticPages.getInTouch)
     .pause(2)
-    .exec(
-      http("Load Products List Page - Category: All Products")
-        .get("/category/all")
-    )
+    .exec(Category.productListByCategory_AllProducts)
     .pause(2)
-    .exec(
-      http("Load Next Page of Products - Page 1")
-        .get("/category/all?page=1")
-    )
+    .exec(Category.loadSecondPageOfProducts)
     .pause(2)
-    .exec(
-      http("Load Next Page of Products - Page 2")
-        .get("/category/all?page=2")
-    )
+    .exec(Category.loadThirdPageOfProducts)
     .pause(2)
-    .exec(
-      http("Load Products Details Page - Product Darts Board")
-        .get("/product/darts-board")
-    )
+    .exec(Product.loadProductDetailsPage_DartBoards)
     .pause(2)
-    .exec(
-      http("Add Product to Cart: Product ID: 19")
-        .get("/cart/add/19")
-    )
+    .exec(Product.addProductToCart_Product19)
     .pause(2)
-    .exec(
-      http("Load Products List Page: Babies Toys")
-        .get("/category/babies-toys")
-    )
+    .exec(Category.productListByCategory_BabiesToys)
     .pause(2)
-    .exec(
-      http("Add Product to Cart: Product ID: 11")
-        .get("/cart/add/11")
-    )
+    .exec(Product.addProductToCart_Product11)
     .pause(2)
-    .exec(
-      http("Add Product to Cart: Product ID: 04")
-        .get("/cart/add/4")
-    )
+    .exec(Product.addProductToCart_Product4)
     .pause(2)
-    .exec(
-      http("View Cart")
-        .get("/cart/view")
-    )
+    .exec(Cart.viewCart)
     .pause(2)
-    .exec(
-      http("Login User")
-        .post("/login")
-        .formParam("_csrf", "#{csrfToken}")
-        .formParam("username", "user1")
-        .formParam("password", "pass")
-              .check(css("#_csrf", "content").saveAs("csrfTokenLoggedIn"))
-    )
-
-          .exec(
-                  session -> {
-                    System.out.println(session);
-                    System.out.println("csrfTokenLoggedIn is: " + session.getString("csrfTokenLoggedIn"));
-                    return session;
-                  }
-          )
+    .exec(Customer.login)
     .pause(2)
-    .exec(
-      http("Increase Product Quantity in Cart - Product Id: 19")
-        .get("/cart/add/19?cartPage=true")
-    )
+    .exec(Cart.increaseQuantityInCart)
     .pause(2)
-    .exec(
-      http("Subtract Product Quantity in Cart - Product Id: 19")
-        .get("/cart/subtract/19")
-    )
+    .exec(Cart.decreaseQuantityInCart)
     .pause(2)
-    .exec(
-      http("Remove Product - Product Id: 11")
-        .get("/cart/remove/11")
-    )
+    .exec(Cart.checkout)
     .pause(2)
-    .exec(
-      http("Checkout")
-        .get("/cart/checkout")
-              .check(substring("Your products are on their way to you now!!"))
-    )
-    .pause(2)
-    .exec(
-      http("Logout")
-        .post("/logout")
-        .formParam("_csrf", "#{csrfTokenLoggedIn}")
-    );
+    .exec(Customer.logout);
 
   {
 	  setUp(scn.injectOpen(atOnceUsers(1))).protocols(httpProtocol);
